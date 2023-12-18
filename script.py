@@ -1,15 +1,7 @@
-# A company that produces two types of products: chairs and tables.
-# The company has constraints on the availability of labor hours, wood, and steel.
-# The goal is to maximize the profit by determining the number of chairs and tables to produce
-
-#            time            wood                    steel
-# Chairs:    2 hours         4 units of wood         1 unit of steel.
-# Tables:    3 hours         6 units of wood         3 units of steel.
-
-# The profit is $5 per chair and $8 per table.
-
 import pulp
 import tkinter as tk
+import matplotlib.pyplot as plt
+import numpy as np
 from tkinter import messagebox
 
 
@@ -20,16 +12,15 @@ def solve_production_plan():
     tables = pulp.LpVariable("Tables", lowBound=0, cat="Integer")
 
     try:
-        chair_profit = int(chair_profit_entry.get())
-        table_profit = int(table_profit_entry.get())
+        profit_per_chair = int(chair_profit_entry.get())
+        profit_per_table = int(table_profit_entry.get())
         labor_hours_available = int(labor_entry.get())
         wood_available = int(wood_entry.get())
         steel_available = int(steel_entry.get())
     except:
         messagebox.showerror("Error", f"An error occurred: Invalid entry provided :(")
+        return
 
-    profit_per_chair = chair_profit
-    profit_per_table = table_profit
     problem += profit_per_chair * chairs + profit_per_table * tables
 
     problem += 2 * chairs + 3 * tables <= labor_hours_available
@@ -45,8 +36,55 @@ def solve_production_plan():
         text=f"Number of chairs = {optimal_chairs}\nNumber of tables = {optimal_tables}\nTotal profit = ${total_profit}"
     )
 
+    plot_feasible_region(
+        labor_hours_available, wood_available, steel_available
+    )  # our plot after solving the ploblem
 
-# GUI setup
+
+############################################################################################################################# PLOT #
+def plot_feasible_region(labor_hours_available, wood_available, steel_available):
+    def labor_constraint(chairs):
+        return (labor_hours_available - 2 * chairs) / 3
+
+    def wood_constraint(chairs):
+        return (wood_available - 4 * chairs) / 6
+
+    def steel_constraint(chairs):
+        return steel_available - chairs / 1
+
+    chairs_vals = np.linspace(0, max(labor_hours_available // 2, wood_available // 4, steel_available), 100)
+
+    labor_tables = labor_constraint(chairs_vals)
+    wood_tables = wood_constraint(chairs_vals)
+    steel_tables = steel_constraint(chairs_vals)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        chairs_vals,
+        labor_tables,
+        label="Labor Constraint: 2*chairs + 3*tables <= labor_hours",
+    )
+    plt.plot(chairs_vals, wood_tables, label="Wood Constraint: 4*chairs + 6*tables <= wood")
+    plt.plot(chairs_vals, steel_tables, label="Steel Constraint: chairs + 3*tables <= steel")
+
+    plt.fill_between(
+        chairs_vals,
+        0,
+        np.minimum.reduce([labor_tables, wood_tables, steel_tables]),
+        alpha=0.2,
+        label="Feasible Region",
+        color="gray",
+    )
+
+    plt.xlabel("Chairs")
+    plt.ylabel("Tables")
+    plt.title("Feasible Region")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+############################################################################################################################## GUI #
 root = tk.Tk()
 root.title("Production Planning Solver")
 
