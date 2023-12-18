@@ -1,3 +1,12 @@
+# A company that produces two types of products: chairs and tables.
+# The company has constraints on the availability of labor hours, wood, and steel.
+# The goal is to maximize the profit by determining the number of chairs and tables to produce
+
+#            time            wood                    steel
+# Chairs:    2 hours         4 units of wood         1 unit of steel.
+# Tables:    3 hours         6 units of wood         3 units of steel.
+
+
 import pulp
 import tkinter as tk
 import matplotlib.pyplot as plt
